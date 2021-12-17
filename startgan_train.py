@@ -2,7 +2,7 @@
 # StarGAN: Unified Generative Adversarial Networks 
 # for Multi-Domain Image-to-Image Translation
 # https://github.com/taki0112/StarGAN-Tensorflow
-from stargan_model import *
+from model.stargan_model import *
 from absl import flags, app
 from random import shuffle
 
@@ -12,51 +12,50 @@ import numpy as np
 import cv2
 import sys
 import random
+import easydict
+import os
 
-flags.DEFINE_integer('img_size', 128, 'Image size (Width and height)')
-
-flags.DEFINE_integer('ch', 3, 'Channel')
-
-flags.DEFINE_integer('batch_size', 8, 'Batch size')
-
-flags.DEFINE_integer('epochs', 200, 'Total epochs')
-
-flags.DEFINE_integer('num_classes', 48+2, 'Number of classes')
-
-flags.DEFINE_float('lr', 0.0001, 'Learning rate')
-
-flags.DEFINE_bool('augment_flag', True, 'True or False')
-
-flags.DEFINE_float('adv_weight', 1., 'Weight factor')
-
-flags.DEFINE_float('rec_weight', 10., 'Weight factor')
-
-flags.DEFINE_float('cls_weight', 10., 'Weight factor')
-
-flags.DEFINE_string('A_txt_path', 'D:/[1]DB/[2]third_paper_DB/[4]Age_and_gender/race_age_gender_generation/Morph_AFAD_16_63/first_fold/AFAD-F_Morph-M_16_39_40_63/train/female_16_39_train.txt', 'Train A text path')
-
-flags.DEFINE_string('A_img_path', 'D:/[1]DB/[1]second_paper_DB/AFAD_16_69_DB/backup/fix_AFAD/', 'Train A image path')
-
-flags.DEFINE_integer('A_n_images', 6318, 'Number of training A images')
-
-flags.DEFINE_string('B_txt_path', 'D:/[1]DB/[2]third_paper_DB/[4]Age_and_gender/race_age_gender_generation/Morph_AFAD_16_63/first_fold/AFAD-F_Morph-M_16_39_40_63/train/male_40_63_train.txt', 'Train B text path')
-
-flags.DEFINE_string('B_img_path', 'D:/[1]DB/[2]third_paper_DB/[4]Age_and_gender/Morph/All/male_40_63/', 'Train B image path')
-
-flags.DEFINE_integer('B_n_images', 6318, 'Number of training B images')
-
-flags.DEFINE_bool('pre_checkpoint', False, 'True or False')
-
-flags.DEFINE_string("sample_images", "C:/Users/Yuhwan/Downloads/dd", "")
-
-flags.DEFINE_string('pre_checkpoint_path', '', '(Saved) Pre checkpoint path')
-
-flags.DEFINE_string('save_checkpoint_path', '', 'Checkpoint path')
-
-flags.DEFINE_bool('train', True, 'True or False')
-
-FLAGS = flags.FLAGS
-FLAGS(sys.argv)
+FLAGS = easydict.EasyDict({"img_size": 128,
+                           
+                           "ch": 3,
+                           
+                           "batch_size": 16,
+                           
+                           "epochs": 100,
+                           
+                           "num_classes":48+2,
+                           
+                           "lr": 0.0001,
+                           
+                           "augment_flag": True,
+                           
+                           "adv_weight": 1,
+                           
+                           "rec_weight": 10.,
+                           
+                           "cls_weight": 10.,
+                           
+                           "A_txt_path": "/content/Morph_AFAD_16_63/first_fold/AFAD-M_Morph-F_40_63_16_39/train/male_40_63_train.txt",
+                           
+                           "A_img_path": "/content/AFAD/All/male_40_63/",
+                           
+                           "A_n_images": 1751,
+                           
+                           "B_txt_path": "/content/Morph_AFAD_16_63/first_fold/AFAD-M_Morph-F_40_63_16_39/train/female_16_39_train.txt",
+                           
+                           "B_img_path": "/content/Morph/All/female_16_39/",
+                           
+                           "B_n_images": 1751,
+                           
+                           "pre_checkpoint": False,
+                           
+                           "sample_images": "/content/drive/My Drive/3rd_paper/[1]Age_gender_race_dataset/starGAN/AFAD-M_Morph-F_40_63_16_39/sample_images",
+                           
+                           "pre_checkpoint_path": "",
+                           
+                           "save_checkpoint_path": "/content/drive/My Drive/3rd_paper/[1]Age_gender_race_dataset/starGAN/AFAD-M_Morph-F_40_63_16_39/checkpoint",
+                           
+                           "train": True})
 
 # Define optimization
 generator_optim = tf.keras.optimizers.Adam(FLAGS.lr, beta_1=0.5)
@@ -280,19 +279,19 @@ def main(argv=None):
                 
 
                 if count % 100 == 0:
-                    print(G_loss, D_loss)
+                    print("Epoch: {}, G_loss = {}, D_loss = {} [{}/{}]".format(epoch, G_loss, D_loss, step + 1, batch_idx))
                     x_fake = gen_model(fake_generator, A_batch_images, B_batch_labels, False)
 
                     plt.imsave(FLAGS.sample_images + "/" + "{}_1_fake.png".format(count), x_fake[0].numpy() * 0.5 + 0.5)
                     plt.imsave(FLAGS.sample_images + "/" + "{}_2_fake.png".format(count), x_fake[1].numpy() * 0.5 + 0.5)
                     plt.imsave(FLAGS.sample_images + "/" + "{}_3_fake.png".format(count), x_fake[2].numpy() * 0.5 + 0.5)
 
-                    plt.imsave(FLAGS.sample_images + "/" + "{}_1_original.png".format(count), A_batch_images[0] * 0.5 + 0.5)
-                    plt.imsave(FLAGS.sample_images + "/" + "{}_2_original.png".format(count), A_batch_images[1] * 0.5 + 0.5)
-                    plt.imsave(FLAGS.sample_images + "/" + "{}_3_original.png".format(count), A_batch_images[2] * 0.5 + 0.5)
+                    # plt.imsave(FLAGS.sample_images + "/" + "{}_1_original.png".format(count), A_batch_images[0] * 0.5 + 0.5)
+                    # plt.imsave(FLAGS.sample_images + "/" + "{}_2_original.png".format(count), A_batch_images[1] * 0.5 + 0.5)
+                    # plt.imsave(FLAGS.sample_images + "/" + "{}_3_original.png".format(count), A_batch_images[2] * 0.5 + 0.5)
 
                 if count % 1000 == 0:
-                    model_dir = FLAGS.save_checkpoint
+                    model_dir = FLAGS.save_checkpoint_path
                     folder_name = int(count/1000)
                     folder_neme_str = '%s/%s' % (model_dir, folder_name)
                     if not os.path.isdir(folder_neme_str):
@@ -310,4 +309,4 @@ def main(argv=None):
 
 
 if __name__ == '__main__':
-    app.run(main)
+    main()
